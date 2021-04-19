@@ -1,0 +1,32 @@
+python: can't open file 'manage.py': [Errno 2] No such file or directory
+INFO:     Started server process [10665]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:6969 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [10665]
+INFO:     Started server process [10772]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:6969 (Press CTRL+C to quit)
+INFO:     219.250.110.194:26995 - "GET / HTTP/1.1" 200 OK
+INFO:     219.250.110.194:26995 - "GET /xrp/25 HTTP/1.1" 200 OK
+INFO:     219.250.110.194:49279 - "GET /xrp/100 HTTP/1.1" 200 OK
+INFO:     219.250.110.194:26995 - "GET / HTTP/1.1" 200 OK
+INFO:     219.250.110.194:49279 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     219.250.110.194:26995 - "GET /xrp/25 HTTP/1.1" 200 OK
+INFO:     219.250.110.194:64223 - "GET /xrp/100 HTTP/1.1" 200 OK
+INFO:     219.250.110.194:64231 - "GET /xrp/100 HTTP/1.1" 200 OK
+INFO:     219.250.110.194:64262 - "GET /xrp/100 HTTP/1.1" 200 OK
+INFO:     219.250.110.194:61569 - "GET /xrp/100 HTTP/1.1" 200 OK
+INFO:     219.250.110.194:61568 - "GET /xrp/100 HTTP/1.1" 200 OK
+INFO:     219.250.110.194:61568 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     219.250.110.194:61580 - "GET /xrp/100 HTTP/1.1" 200 OK
+INFO:     219.250.110.194:47058 - "GET /xrp/25 HTTP/1.1" 200 OK
+INFO:     219.250.110.194:47056 - "GET /xrp/25 HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [10772]
