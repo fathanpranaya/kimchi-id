@@ -10,6 +10,12 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
+
+from . import crud, models, schemas
+from .database import SessionLocal
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -126,5 +132,5 @@ async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "context": context})
 
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=6969)
+# if __name__ == "__main__":
+#     uvicorn.run(app, host="0.0.0.0", port=6969)
