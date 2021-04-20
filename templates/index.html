@@ -22,7 +22,8 @@
 				<div class="col-md-12">
 					<div class="card">
 						<div class="card-header">
-							{{ coin['coin_name'] | upper}} | Indodax : <b>{{ "Rp {:,.0f}".format(coin['indodax_price']) }} </b> | Gopax : <b>{{ "{:,.0f}원".format(coin['gopax_price']) }} </b>
+							<h3>{{ coin['coin_name'] | upper}}</h3>
+                            <h6>Indodax : <b>{{ "Rp {:,.0f}".format(coin['indodax_price']) }} </b> | Gopax : <b>{{ "{:,.0f}원".format(coin['gopax_price']) }} </b></h6>
 						</div>
 						<div class="card-body">
 							<table class="table table-sm table-striped">
