@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Bootstrap 4, from LayoutIt!</title>
+    <title>Kimchi Premium ID</title>
 
     <meta name="description" content="Source code generated using layoutit.com">
     <meta name="author" content="LayoutIt!">
@@ -17,32 +17,42 @@
   <body>
 
     <div class="container-fluid">
-	<div class="row">
-		<div class="col-md-12">
-			<table class="table">
-				<thead>
-					<tr>
-						<th>#</th>
-						<th>Remittance</th>
-						<th>Exchange Rate</th>
-						<th>Kimchi Rate</th>
-					</tr>
-				</thead>
-                
-				<tbody>
-                    {% for row in context['rows']  %}
-					<tr>
-						<td>{{loop.index}}</td>
-						<td>{{row['remittance']}}</td>
-						<td>{{row['rate']}}</td>
-						<td>{{row['kimchi']}} %</td>
-					</tr>
-                    {% endfor %}
-				</tbody>
-			</table>
-		</div>
+		{% for coin in context['coins'] %}
+			<div class="row">
+				<div class="col-md-12">
+					<div class="card">
+						<div class="card-header">
+							{{ coin['coin_name'] | upper}} | Indodax : <b>{{ "Rp {:,.0f}".format(coin['indodax_price']) }} </b> | Gopax : <b>{{ "{:,.0f}원".format(coin['gopax_price']) }} </b>
+						</div>
+						<div class="card-body">
+							<table class="table table-sm table-striped">
+								<thead class="thead-dark"> 
+									<tr>
+										<th>#</th>
+										<th>Remittance</th>
+										<th>Exchange Rate</th>
+										<th>Kimchi Rate</th>
+									</tr>
+								</thead>
+								
+								<tbody>
+									{% for row in coin['rows']  %}
+									<tr>
+										<td>{{loop.index}}</td>
+										<td>{{row['remittance']}}</td>
+										<td>{{row['rate']}}</td>
+										<td>{{row['kimchi']}} %</td>
+									</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+			<br>
+		{% endfor %}
 	</div>
-</div>
 
     <script src="{{ url_for('static', path='/js/jquery.min.js') }}"></script>
     <script src="{{ url_for('static', path='/js/bootstrap.min.js') }}"></script>

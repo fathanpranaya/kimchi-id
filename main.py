@@ -17,6 +17,20 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
+############## CONST ##############
+TRF_FEE = {
+    'xrp': 1,
+    'xlm': 0.2,
+    'doge': 5,
+}
+
+BUY_MAKER_RATE = 0.3
+SELL_MAKER_RATE = 0.2
+KRW_WITHDRAW_FEE = 1000
+
+############## END CONST ##############
+
+
 def get_sentbe_rate():
     headers = {
         'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidHJhbnNmZXIiLCJyb2xlIjoidHJhbnNmZXIiLCJzYWx0IjoiWVQjdDQiLCJleHAiOjQ2NjY0MjEwMTJ9.sivUSmZDNkYPL-PTgoN8HrZKjUVE8pE_L5MqqA6cvxk'}
@@ -39,58 +53,66 @@ def get_coin_price(coin='xrp'):
     return coin_buy, coin_sell
 
 
+############## KIMCHI CORE CALCULATION ##############
+def calc_kimchi(idr, coin_buy, coin_sell, coin_name):
+    # Buying Coin from Indodax
+    coin_bought = (idr - BUY_MAKER_RATE / 100 * idr) / coin_buy
+
+    # Transfer Coin to Gopax
+    coin_transferred = coin_bought - TRF_FEE[coin_name]
+
+    # Sell Coin at Gopax
+    coin_sell_maker_fee = SELL_MAKER_RATE / 100 * (coin_transferred * coin_sell)
+    krw = coin_transferred * coin_sell - coin_sell_maker_fee
+
+    # Withdraw to Korea bank
+    krw_bank = int(krw - KRW_WITHDRAW_FEE)
+    
+    return krw_bank
+
+
+
+
 def calculate_kimchi(idr: int = 100):
     # EXTERNAL API CALL
-    xrp_buy, xrp_sell = get_coin_price('xrp')
-
     HANPASS_RATE = get_hanpass_rate()
     SENTBE_RATE = get_sentbe_rate()
-
-    xrp_buy = int(indodax_xrp_res.json()['ticker']['buy'])
-    xrp_sell = int(gopax_xrp_res.json()['bid'])
-
-    coin_rate = xrp_buy / xrp_sell
+    BANDAR_RATE = 12.75
 
     IDR = idr * 1e6
-    DAX_TRANSFER_FEE = int(6500 * (IDR / 25 * 1e6))
-
-    # Buying XRP from Indodax
-    XRP_BUY_MAKER_RATE = 0.3
-    xrp_buy_maker_fee = XRP_BUY_MAKER_RATE / 100 * IDR
-    xrp_bought = (IDR - DAX_TRANSFER_FEE - xrp_buy_maker_fee) / xrp_buy
-
-    # Transfer XRP to Gopax
-    XRP_TRANSFER_FEE = 3
-    xrp_transferred = xrp_bought - XRP_TRANSFER_FEE
-
-    # Sell XRP at Gopax
-    XRP_SELL_MAKER_RATE = 0.2
-    xrp_sell_maker_fee = XRP_SELL_MAKER_RATE / 100 * (xrp_transferred * xrp_sell)
-    krw = xrp_transferred * xrp_sell - xrp_sell_maker_fee
-
-    # Withdraw to bank
-    DEPOSIT_FEE = 1000
-    krw_bank = int(krw - DEPOSIT_FEE)
-
-    now = datetime.now().strftime("%y/%m/%d %H:%M")
-
-    context = {
-        'Date': now,
-        'rows': [
+    coin_names = ['xrp', 'xlm', 'doge']
+    coins = []
+    for coin_name in coin_names:
+        coin_buy, coin_sell = get_coin_price(coin_name)
+        coin_kimchi = calc_kimchi(IDR, coin_buy, coin_sell, coin_name)
+        rows = [
             {
                 'remittance': 'Sentbe',
                 'rate': "{:.2f}".format(SENTBE_RATE),
-                'kimchi': "{:.2f}".format(((krw_bank * SENTBE_RATE / IDR) - 1) * 100)
+                'kimchi': "{:.2f}".format(((coin_kimchi * SENTBE_RATE / IDR) - 1) * 100)
             },
             {
                 'remittance': 'Hanpass',
                 'rate': "{:.2f}".format(HANPASS_RATE),
-                'kimchi': "{:.2f}".format(((krw_bank * HANPASS_RATE / IDR) - 1) * 100)
+                'kimchi': "{:.2f}".format(((coin_kimchi * HANPASS_RATE / IDR) - 1) * 100)
             },
+            {
+                'remittance': 'Bandar',
+                'rate': "{:.2f}".format(BANDAR_RATE),
+                'kimchi': "{:.2f}".format(((coin_kimchi * BANDAR_RATE / IDR) - 1) * 100)
+            },
+        ]
+        coin_ctx = {
+            'coin_name': coin_name,
+            'gopax_price': coin_sell,
+            'indodax_price': coin_buy,
+            'rows': rows,
+        }
+        coins.append(coin_ctx)    
 
-        ],
-        'GOPAX Price [KRW]': "{:,}".format(xrp_sell),
-        'Indodax Price [IDR]': "{:,}".format(xrp_buy),
+    context = {
+        'ts': datetime.now().strftime("%y/%m/%d %H:%M"),
+        'coins': coins,
     }
 
     return context
@@ -99,7 +121,6 @@ def calculate_kimchi(idr: int = 100):
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     # CALCULATE KIMCHI
-    # TODO: add more coin
     context = calculate_kimchi(100)
 
     return templates.TemplateResponse("index.html", {"request": request, "context": context})
