@@ -49,6 +49,8 @@ def get_hanpass_rate():
     res = requests.post('https://www.hanpass.com/getCost', json=json).json()
     return float(res['exchangeRate'])
 
+SENTBE_RATE = get_sentbe_rate()
+HANPASS_RATE = get_hanpass_rate()
 
 def get_coin_price(coin='xrp'):
     indodax_coin_res = requests.get('https://indodax.com/api/ticker/' + coin.lower() + 'idr')
@@ -56,6 +58,32 @@ def get_coin_price(coin='xrp'):
     coin_buy = int(indodax_coin_res.json()['ticker']['last'])
     coin_sell = int(gopax_coin_res.json()['price'])
     return coin_buy, coin_sell
+
+def get_coin_price_v2(indodax_price, coin='xrp'):
+    gopax_coin_res = requests.get('https://api.gopax.co.kr/trading-pairs/' + coin.upper() + '-KRW/ticker')
+    coin_sell = int(gopax_coin_res.json()['price'])
+    coin_buy = int(indodax_price['tickers'][coin.lower()+'_idr']['last'])
+    return coin_buy, coin_sell
+
+@app.get("/test")
+async def test(request: Request):
+    indodax_price = requests.get('https://indodax.com/api/ticker_all').json()
+    
+    get_coin_price_v2(indodax_price, 'xrp')
+    return {'ok': 'ok'}
+
+
+@app.get("/update_ex_rate")
+async def update_ex_rate(request: Request):
+    SENTBE_RATE = get_sentbe_rate()
+    HANPASS_RATE = get_hanpass_rate()
+    return {'SENTBE_RATE': SENTBE_RATE, 'HANPASS_RATE': HANPASS_RATE}
+
+@app.get("/get_ex_rate")
+async def get_ex_rate(request: Request):
+    return {'SENTBE_RATE': SENTBE_RATE, 'HANPASS_RATE': HANPASS_RATE}
+
+
 
 
 ############## KIMCHI CORE CALCULATION ##############
@@ -78,14 +106,15 @@ def calc_kimchi(idr, coin_buy, coin_sell, coin_name):
 
 def calculate_kimchi(idr: int = 100):
     # EXTERNAL API CALL
-    HANPASS_RATE = get_hanpass_rate()
-    SENTBE_RATE = get_sentbe_rate()
+    # HANPASS_RATE = get_hanpass_rate()
+    # SENTBE_RATE = get_sentbe_rate()
     BANDAR_RATE = 12.75
+    indodax_price = requests.get('https://indodax.com/api/ticker_all').json()
 
     IDR = idr * 1e6
     coins = []
     for coin_name in coin_names:
-        coin_buy, coin_sell = get_coin_price(coin_name)
+        coin_buy, coin_sell = get_coin_price_v2(indodax_price, coin_name)
         coin_kimchi = calc_kimchi(IDR, coin_buy, coin_sell, coin_name)
         rows = [
             {
