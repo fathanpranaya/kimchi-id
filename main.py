@@ -28,8 +28,10 @@ TRF_FEE = {
     'ada': 1,
     'eos': 0.1,
     'ltc': 0.02,
+    'btc': 5e-4,
+    'eth': 1e-2,
 }
-coin_names = ['xrp', 'xlm', 'doge', 'bch', 'eos', 'ltc']
+coin_names = ['xrp', 'xlm', 'doge', 'bch', 'eos', 'ltc', 'btc', 'eth']
 
 BUY_MAKER_RATE = 0.3
 SELL_MAKER_RATE = 0.2

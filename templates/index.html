@@ -3,14 +3,14 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>Kimchi Premium ID</title>
 
     <!-- <link href="{{ url_for('static', path='/css/bootstrap.min.css') }}" rel="stylesheet"> -->
     <!-- <link href="{{ url_for('static', path='/css/style.css') }}" rel="stylesheet"> -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4/dt-1.10.24/datatables.min.css"/>
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4/dt-1.10.24/cr-1.5.3/fc-3.3.2/r-2.2.7/datatables.min.css"/>
 
   </head>
   <body>
@@ -20,27 +20,26 @@
 			<div class="col-md-12">
 				<div class="card">
 					<div class="card-header">
-						<h6>Time : <b>{{ context['ts'] }}</b> |  KRW to IDR: <b>{{ context['kurs'] }}</b></h6>
+						<h6>Time : <b>{{ context['ts'] }}</b> </h6>
+						<h6>KRW to IDR: <b>{{ "{:.2f}".format(context['kurs']) }}</b></h6>
 					</div>
 					<div class="card-body">
 						<table id="table-coin" class="table table-sm table-striped">
 							<thead> 
 								<tr>
-									<th>#</th>
-									<th>Coin</th>
+									<th data-priority="1">Coin</th>
 									<th>Buy</th>
 									<th>Buy Vol. (B)</th>
 									<th>Sell</th>
 									<th>Sell Vol. (B)</th>
-									<th>Kimchi</th>
-									<th>Greed</th>
+									<th data-priority="2">Kimchi</th>
+									<th data-priority="3">Greed</th>
 								</tr>
 							</thead>
 							
 							<tbody>
 								{% for coin in context['coins'] %}
 								<tr>
-									<td>{{ loop.index }}</td>
 									<td>{{ coin['coin_name'].upper() }}</td>
 									<td>{{ "Rp {:,.0f}".format(coin['indodax_price']) }}</td>
 									<td>{{ coin['coin_buy_vol'] }}</td>
@@ -65,11 +64,19 @@
 	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-	<script type="text/javascript" src="https://cdn.datatables.net/v/bs4/dt-1.10.24/datatables.min.js"></script>
+	
+	<script type="text/javascript" src="https://cdn.datatables.net/v/bs4/dt-1.10.24/cr-1.5.3/fc-3.3.2/r-2.2.7/datatables.min.js"></script>
 
 	<script>
 		$(document).ready(function() {
-			$('#table-coin').DataTable();
+			$('#table-coin').DataTable({
+				responsive: true
+				// scrollX: true,
+				// scrollCollapse: true,
+				// fixedColumns:   {
+				// 	leftColumns: 1,
+				// }
+			});
 		} );
 	</script>
 
