@@ -18,7 +18,6 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-
 ############## CONST ##############
 TRF_FEE = {
     'xrp': 1,
@@ -37,6 +36,7 @@ BUY_MAKER_RATE = 0.3
 SELL_MAKER_RATE = 0.2
 KRW_WITHDRAW_FEE = 1000
 
+
 ############## END CONST ##############
 
 
@@ -53,8 +53,11 @@ def get_hanpass_rate():
     res = requests.post('https://www.hanpass.com/getCost', json=json).json()
     return float(res['exchangeRate'])
 
+
 SENTBE_RATE = get_sentbe_rate()
 HANPASS_RATE = get_hanpass_rate()
+print('test')
+
 
 def get_coin_price(coin='xrp'):
     indodax_coin_res = requests.get('https://indodax.com/api/ticker/' + coin.lower() + 'idr')
@@ -63,22 +66,23 @@ def get_coin_price(coin='xrp'):
     coin_sell = int(gopax_coin_res.json()['price'])
     return coin_buy, coin_sell
 
+
 def get_coin_price_v2(indodax_price, coin='xrp'):
     gopax_coin_res = requests.get('https://api.gopax.co.kr/trading-pairs/' + coin.upper() + '-KRW/ticker').json()
     coin_sell = int(gopax_coin_res['bid'])
-    coin_sell_vol = round(float(gopax_coin_res['quoteVolume'])/1e9, 2)
+    coin_sell_vol = round(float(gopax_coin_res['quoteVolume']) / 1e9, 2)
 
-    
-    buy = indodax_price['tickers'][coin.lower()+'_idr']
+    buy = indodax_price['tickers'][coin.lower() + '_idr']
     coin_buy = int(buy['buy'])
-    coin_buy_vol = round(float(buy['vol_idr'])/1e9, 2)
+    coin_buy_vol = round(float(buy['vol_idr']) / 1e9, 2)
 
     return coin_buy, coin_sell, coin_buy_vol, coin_sell_vol
+
 
 @app.get("/test")
 async def test(request: Request):
     indodax_price = requests.get('https://indodax.com/api/ticker_all').json()
-    
+
     get_coin_price_v2(indodax_price, 'xrp')
     return {'ok': 'ok'}
 
@@ -89,11 +93,10 @@ async def update_ex_rate(request: Request):
     HANPASS_RATE = get_hanpass_rate()
     return {'SENTBE_RATE': SENTBE_RATE, 'HANPASS_RATE': HANPASS_RATE}
 
+
 @app.get("/get_ex_rate")
 async def get_ex_rate(request: Request):
     return {'SENTBE_RATE': SENTBE_RATE, 'HANPASS_RATE': HANPASS_RATE}
-
-
 
 
 ############## KIMCHI CORE CALCULATION ##############
@@ -110,8 +113,9 @@ def calc_kimchi(idr, coin_buy, coin_sell, coin_name):
 
     # Withdraw to Korea bank
     krw_bank = int(krw - KRW_WITHDRAW_FEE)
-    
+
     return krw_bank
+
 
 def calculate_kimchi(idr: int = 100):
     # EXTERNAL API CALL
@@ -120,7 +124,7 @@ def calculate_kimchi(idr: int = 100):
     BANDAR_RATE = 12.75
     indodax_price = requests.get('https://indodax.com/api/ticker_all').json()
     ex_rate = mean([SENTBE_RATE, HANPASS_RATE, BANDAR_RATE])
-    
+
     fear_pairs = requests.get('https://datavalue.dunamu.com/api/fearindex').json()['pairs']
     fear_levels = {}
     for pair in fear_pairs:
@@ -132,24 +136,7 @@ def calculate_kimchi(idr: int = 100):
         coin_buy, coin_sell, coin_buy_vol, coin_sell_vol = get_coin_price_v2(indodax_price, coin_name)
         coin_kimchi = calc_kimchi(IDR, coin_buy, coin_sell, coin_name)
         coin_fear = fear_levels.get(coin_name.upper())
-        
-        # rows = [
-        #     {
-        #         'remittance': 'Sentbe',
-        #         'rate': "{:.2f}".format(SENTBE_RATE),
-        #         'kimchi': "{:.2f}".format(((coin_kimchi * SENTBE_RATE / IDR) - 1) * 100)
-        #     },
-        #     {
-        #         'remittance': 'Hanpass',
-        #         'rate': "{:.2f}".format(HANPASS_RATE),
-        #         'kimchi': "{:.2f}".format(((coin_kimchi * HANPASS_RATE / IDR) - 1) * 100)
-        #     },
-        #     {
-        #         'remittance': 'Bandar',
-        #         'rate': "{:.2f}".format(BANDAR_RATE),
-        #         'kimchi': "{:.2f}".format(((coin_kimchi * BANDAR_RATE / IDR) - 1) * 100)
-        #     },
-        # ]
+
         coin_ctx = {
             'coin_name': coin_name,
             'gopax_price': coin_sell,
@@ -160,7 +147,7 @@ def calculate_kimchi(idr: int = 100):
             'kimchi': "{:.2f}".format(((coin_kimchi * ex_rate / IDR) - 1) * 100)
             # 'rows': rows,
         }
-        coins.append(coin_ctx)    
+        coins.append(coin_ctx)
 
     context = {
         'ts': datetime.now().strftime("%y/%m/%d %H:%M"),
@@ -179,5 +166,16 @@ async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "context": context})
 
 
+@app.get("/get_all_coins")
+async def get_all_coins(request: Request):
+    return {'coins': coin_names}
+
+
+@app.get("/update_coin")
+async def update_coin(coin_name: str = 'xrp'):
+
+    return {'coin_name': coin_name}
+
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=6969)
+    uvicorn.run(app, host="0.0.0.0", port=7979)
