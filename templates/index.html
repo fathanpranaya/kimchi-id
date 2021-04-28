@@ -65,7 +65,7 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h6>Time : <b>{{ context['ts'] }}</b></h6>
+                    <h6>Time : <b id="ts">{{ context['ts'] }}</b></h6>
                     <h6>KRW to IDR: <b>{{ "{:.2f}".format(context['kurs']) }}</b></h6>
                 </div>
                 <div class="card-body">
@@ -142,6 +142,7 @@
                         next()
                     });
                 }
+                $("#ts").text(res['ts'])
 
             });
 
