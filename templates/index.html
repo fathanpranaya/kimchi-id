@@ -12,6 +12,51 @@
     <link rel="stylesheet" type="text/css"
           href="https://cdn.datatables.net/v/bs4/dt-1.10.24/cr-1.5.3/fc-3.3.2/r-2.2.7/datatables.min.css"/>
 
+    <style>
+        @-webkit-keyframes invalid {
+            from {
+                background-color: lightgreen;
+            }
+            to {
+                background-color: inherit;
+            }
+        }
+
+        @-moz-keyframes invalid {
+            from {
+                background-color: lightgreen;
+            }
+            to {
+                background-color: inherit;
+            }
+        }
+
+        @-o-keyframes invalid {
+            from {
+                background-color: lightgreen;
+            }
+            to {
+                background-color: inherit;
+            }
+        }
+
+        @keyframes invalid {
+            from {
+                background-color: lightgreen;
+            }
+            to {
+                background-color: inherit;
+            }
+        }
+
+        .invalid {
+            -webkit-animation: invalid 1s infinite; /* Safari 4+ */
+            -moz-animation: invalid 1s infinite; /* Fx 5+ */
+            -o-animation: invalid 1s infinite; /* Opera 12+ */
+            animation: invalid 1s infinite; /* IE 10+ */
+        }
+    </style>
+
 </head>
 <body>
 
@@ -39,13 +84,13 @@
 
                         <tbody>
                         {% for coin in context['coins'] %}
-                            <tr>
+                            <tr id="{{ coin['coin_name'] }}">
                                 <td>{{ coin['coin_name'].upper() }}</td>
-                                <td>{{ "Rp {:,.0f}".format(coin['indodax_price']) }}</td>
+                                <td id="{{ coin['coin_name'] }}-buy">{{ "Rp {:,.0f}".format(coin['indodax_price']) }}</td>
                                 <td>{{ coin['coin_buy_vol'] }}</td>
-                                <td>{{ "{:,.0f}원".format(coin['gopax_price']) }}</td>
+                                <td id="{{ coin['coin_name'] }}-sell">{{ "{:,.0f}원".format(coin['gopax_price']) }}</td>
                                 <td>{{ coin['coin_sell_vol'] }}</td>
-                                <td>{{ coin['kimchi'] }}</td>
+                                <td id="{{ coin['coin_name'] }}-kimchi">{{ coin['kimchi'] }}</td>
                                 <td>{{ coin['coin_fear'] }}</td>
                             </tr>
                         {% endfor %}
@@ -57,7 +102,7 @@
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script src=" https://code.jquery.com/jquery-3.1.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
         integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
         crossorigin="anonymous"></script>
@@ -78,22 +123,35 @@
         var port = location.port;
         var url = "http://" + host + ":" + port;
 
-        function initCoin(coin_name) {
-            var updateData = function () {
-                $.getJSON(url + "/update_coin?coin_name=" + coin_name, function (res) {
-                    console.log(res);
-                });
-            }
+        function updateCoin(coin_name) {
+            $.getJSON(url + "/update_coin?coin_name=" + coin_name, function (res) {
+                colBuy = $("#" + res['coin_name'] + "-buy");
+                colSell = $("#" + res['coin_name'] + "-sell");
+                colKimchi = $("#" + res['coin_name'] + "-kimchi");
+                row = $("#" + res['coin_name']);
 
-            setInterval(updateData, 2000);
+                if (
+                    colKimchi.text() !== res['kimchi']
+                ) {
+                    console.log("animate");
+                    colBuy.text(res['indodax_price']);
+                    colSell.text(res['gopax_price']);
+                    colKimchi.text(res['kimchi']);
+                    row.addClass('invalid').delay(1000).queue(function (next) {
+                        $(this).removeClass('invalid');
+                        next()
+                    });
+                }
+
+            });
+
+            setTimeout(updateCoin, 20000, coin_name);
         }
 
         function initAll() {
-            console.log("initCoins()");
             $.getJSON(url + "/get_all_coins", function (res) {
                 $.each(res['coins'], function (index, value) {
-                    console.log(value);
-                    initCoin(value);
+                    updateCoin(value);
                 })
             });
         }

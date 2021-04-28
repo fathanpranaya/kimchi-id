@@ -35,6 +35,8 @@ coin_names = ['xrp', 'xlm', 'doge', 'bch', 'eos', 'ltc', 'btc', 'eth']
 BUY_MAKER_RATE = 0.3
 SELL_MAKER_RATE = 0.2
 KRW_WITHDRAW_FEE = 1000
+IDR = 100 * 1e6
+BANDAR_RATE = 12.75
 
 
 ############## END CONST ##############
@@ -56,14 +58,13 @@ def get_hanpass_rate():
 
 SENTBE_RATE = get_sentbe_rate()
 HANPASS_RATE = get_hanpass_rate()
-print('test')
 
 
 def get_coin_price(coin='xrp'):
     indodax_coin_res = requests.get('https://indodax.com/api/ticker/' + coin.lower() + 'idr')
     gopax_coin_res = requests.get('https://api.gopax.co.kr/trading-pairs/' + coin.upper() + '-KRW/ticker')
-    coin_buy = int(indodax_coin_res.json()['ticker']['last'])
-    coin_sell = int(gopax_coin_res.json()['price'])
+    coin_buy = int(indodax_coin_res.json()['ticker']['sell'])
+    coin_sell = int(gopax_coin_res.json()['ask'])
     return coin_buy, coin_sell
 
 
@@ -100,9 +101,11 @@ async def get_ex_rate(request: Request):
 
 
 ############## KIMCHI CORE CALCULATION ##############
-def calc_kimchi(idr, coin_buy, coin_sell, coin_name):
+def calc_kimchi(coin_buy, coin_sell, coin_name):
+    ex_rate = mean([SENTBE_RATE, HANPASS_RATE, BANDAR_RATE])
+
     # Buying Coin from Indodax
-    coin_bought = (idr - BUY_MAKER_RATE / 100 * idr) / coin_buy
+    coin_bought = (IDR - BUY_MAKER_RATE / 100 * IDR) / coin_buy
 
     # Transfer Coin to Gopax
     coin_transferred = coin_bought - TRF_FEE[coin_name]
@@ -114,27 +117,41 @@ def calc_kimchi(idr, coin_buy, coin_sell, coin_name):
     # Withdraw to Korea bank
     krw_bank = int(krw - KRW_WITHDRAW_FEE)
 
-    return krw_bank
+    return ((krw_bank * ex_rate / IDR) - 1) * 100
 
 
-def calculate_kimchi(idr: int = 100):
+def update_kimchi(coin_name):
+    coin_buy, coin_sell = get_coin_price(coin_name)
+    coin_kimchi = calc_kimchi(coin_buy, coin_sell, coin_name)
+
+    coin_ctx = {
+        'coin_name': coin_name,
+        'gopax_price': "{:,.0f}원".format(coin_sell),
+        'indodax_price': "Rp {:,.0f}".format(coin_buy),
+        'kimchi': "{:.2f}".format(coin_kimchi)
+    }
+
+    return coin_ctx
+
+
+def get_kimchi(idr: int = 100):
     # EXTERNAL API CALL
     # HANPASS_RATE = get_hanpass_rate()
     # SENTBE_RATE = get_sentbe_rate()
-    BANDAR_RATE = 12.75
+
     indodax_price = requests.get('https://indodax.com/api/ticker_all').json()
-    ex_rate = mean([SENTBE_RATE, HANPASS_RATE, BANDAR_RATE])
 
     fear_pairs = requests.get('https://datavalue.dunamu.com/api/fearindex').json()['pairs']
+
     fear_levels = {}
     for pair in fear_pairs:
         fear_levels[pair['currency']] = "{:.2f}".format(float(pair['score']))
 
-    IDR = idr * 1e6
     coins = []
     for coin_name in coin_names:
         coin_buy, coin_sell, coin_buy_vol, coin_sell_vol = get_coin_price_v2(indodax_price, coin_name)
-        coin_kimchi = calc_kimchi(IDR, coin_buy, coin_sell, coin_name)
+
+        coin_kimchi = calc_kimchi(coin_buy, coin_sell, coin_name)
         coin_fear = fear_levels.get(coin_name.upper())
 
         coin_ctx = {
@@ -144,15 +161,14 @@ def calculate_kimchi(idr: int = 100):
             'coin_fear': coin_fear,
             'coin_buy_vol': coin_buy_vol,
             'coin_sell_vol': coin_sell_vol,
-            'kimchi': "{:.2f}".format(((coin_kimchi * ex_rate / IDR) - 1) * 100)
-            # 'rows': rows,
+            'kimchi': "{:.2f}".format(coin_kimchi)
         }
         coins.append(coin_ctx)
 
     context = {
         'ts': datetime.now().strftime("%y/%m/%d %H:%M"),
         'coins': coins,
-        'kurs': ex_rate,
+        'kurs': mean([SENTBE_RATE, HANPASS_RATE, BANDAR_RATE]),
     }
 
     return context
@@ -161,7 +177,7 @@ def calculate_kimchi(idr: int = 100):
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     # CALCULATE KIMCHI
-    context = calculate_kimchi(100)
+    context = get_kimchi()
 
     return templates.TemplateResponse("index.html", {"request": request, "context": context})
 
@@ -173,8 +189,8 @@ async def get_all_coins(request: Request):
 
 @app.get("/update_coin")
 async def update_coin(coin_name: str = 'xrp'):
-
-    return {'coin_name': coin_name}
+    context = update_kimchi(coin_name)
+    return context
 
 
 if __name__ == "__main__":
