@@ -5,7 +5,7 @@ import json
 import math
 
 from statistics import mean
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import FastAPI
 
 from fastapi import FastAPI, Request
@@ -35,8 +35,8 @@ coin_names = ['xrp', 'xlm', 'doge', 'bch', 'eos', 'ltc', 'btc', 'eth']
 BUY_MAKER_RATE = 0.3
 SELL_MAKER_RATE = 0.2
 KRW_WITHDRAW_FEE = 1000
-IDR = 100 * 1e6
-BANDAR_RATE = 12.8
+IDR = 113.4 * 1e6
+BANDAR_RATE = 12.60
 
 
 ############## END CONST ##############
