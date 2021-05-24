@@ -35,8 +35,8 @@ coin_names = ['xrp', 'xlm', 'doge', 'bch', 'eos', 'ltc', 'btc', 'eth']
 BUY_MAKER_RATE = 0.3
 SELL_MAKER_RATE = 0.2
 KRW_WITHDRAW_FEE = 1000
-IDR = 113.4 * 1e6
-BANDAR_RATE = 12.60
+BANDAR_RATE = 12.7
+IDR = 2 * 1e6 * BANDAR_RATE
 
 
 ############## END CONST ##############
@@ -167,6 +167,23 @@ def get_kimchi(idr: int = 100):
     return context
 
 
+def get_kimchi_coin(coin_name: str = 'xrp'):
+    indodax_price = requests.get('https://indodax.com/api/ticker_all').json()
+    coin_buy, coin_sell, coin_buy_vol, coin_sell_vol = get_coin_price_v2(indodax_price, coin_name)
+    coin_kimchi = calc_kimchi(coin_buy, coin_sell, coin_name)
+
+    context = {
+        'ts': datetime.now().strftime("%y/%m/%d %H:%M"),
+        'coin_name': coin_name,
+        'gopax_price': "{:,.0f}원".format(coin_sell),
+        'indodax_price': "Rp{:,.0f}".format(coin_buy),
+        'kimchi': "{:.2f}".format(coin_kimchi),
+        'kurs': mean([BANDAR_RATE]),
+    }
+
+    return context
+
+
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     # CALCULATE KIMCHI
@@ -186,5 +203,12 @@ async def update_coin(coin_name: str = 'xrp'):
     return context
 
 
+@app.get("/widget")
+async def get_widget_info():
+    context = get_kimchi_coin('xrp')
+
+    return context
+
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=6969)
+    uvicorn.run(app, host="0.0.0.0", port=8989)

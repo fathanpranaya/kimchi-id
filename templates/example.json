@@ -1,0 +1,14 @@
+{
+  name: "Kimchi Premium Index",
+  data: [
+    {
+      margin: "10",
+      price: "1100원",
+      value_classification: "Extreme Fear",
+      timestamp: "1621814400"
+    }
+  ],
+  metadata: {
+    error: null
+  }
+}
